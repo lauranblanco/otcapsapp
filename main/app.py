@@ -13,7 +13,7 @@ with st.sidebar:
     st.title("📊 Mi Dashboard")
     page = st.radio(
         "Navegación",
-        ["Dashboard", "Análisis", "Configuración"],
+        ["Dashboard"],
         index=0
     )
 
