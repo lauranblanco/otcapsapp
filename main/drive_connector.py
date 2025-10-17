@@ -50,11 +50,18 @@ def get_drive_service():
                 json.dump(creds_dict, f)
 
             flow = InstalledAppFlow.from_client_secrets_file("temp_credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
+
+            try:
+                # 🔹 Intentar flujo local (solo si hay navegador)
+                creds = flow.run_local_server(port=0)
+            except Exception:
+                # 🔹 Si no hay navegador (por ejemplo, en Streamlit Cloud), usar modo consola
+                print("⚠️ No se pudo abrir el navegador; usando flujo de consola.")
+                creds = flow.run_console()
 
             os.remove("temp_credentials.json")
 
-        # Guardar token actualizado localmente
+        # Guardar token actualizado
         with open(TOKEN_PATH, "wb") as token:
             pickle.dump(creds, token)
 
