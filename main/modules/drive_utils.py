@@ -5,12 +5,9 @@ from googleapiclient.errors import HttpError
 from modules.drive_connector import get_drive_service
 
 def list_folders_in_folder(service, folder_id):
-    """Devuelve una lista de carpetas dentro de un folder específico."""
-    query = f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false"
-    results = service.files().list(
-        q=query,
-        fields="files(id, name)"
-    ).execute()
+    """Devuelve una lista de carpetas dentro del folder_id especificado."""
+    query = f"'{folder_id}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+    results = service.files().list(q=query, fields="files(id, name)").execute()
     return results.get("files", [])
 
 def load_csv_from_drive(file_id):
