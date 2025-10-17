@@ -1,52 +1,36 @@
-import streamlit as st
-import os
-from modules.drive_connector import connect_to_drive
-from dotenv import load_dotenv
-from pathlib import Path
 import sys
 import os
 
-# Asegura que el directorio "main" esté en sys.path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# --- Configurar rutas para importar correctamente ---
+current_dir = os.path.dirname(os.path.abspath(__file__))
+modules_path = os.path.join(current_dir, "modules")
+if modules_path not in sys.path:
+    sys.path.append(modules_path)
 
-from modules.drive_utils import list_folders_in_folder
-
+# --- Importaciones ---
+import streamlit as st
+from dotenv import load_dotenv
+from drive_utils import list_folders_in_folder
 
 # --- Cargar variables de entorno ---
-env_path = Path(__file__).resolve().parent / ".env"
-load_dotenv(dotenv_path=env_path)
+load_dotenv(os.path.join(current_dir, ".env"))
 
-# --- Conexión con Google Drive ---
-st.set_page_config(page_title="Google Drive Viewer", page_icon="📁", layout="wide")
+# --- Obtener ID de carpeta de Google Drive ---
+FOLDER_ID = os.getenv("FOLDER_ID")
 
-st.title("📂 Visualizador de carpetas en Google Drive")
+st.set_page_config(page_title="Google Drive App", page_icon="📁")
+st.title("📁 Explorador de Google Drive")
 
-# Obtener ID de carpeta principal desde el .env
-folder_id = os.getenv("FOLDER_ID")
-
-if not folder_id:
-    st.error("⚠️ No se encontró 'FOLDER_ID' en el archivo .env.")
-    st.stop()
-
-# Conectarse a Google Drive
-with st.spinner("Conectando con Google Drive..."):
+if not FOLDER_ID:
+    st.error("❌ No se encontró FOLDER_ID en el archivo .env")
+else:
     try:
-        service = connect_to_drive()
-        st.success("✅ Conexión exitosa con Google Drive")
+        st.write("📂 **Carpeta raíz:**", FOLDER_ID)
+        folders = list_folders_in_folder(FOLDER_ID)
+        if not folders:
+            st.info("No se encontraron subcarpetas en esta carpeta.")
+        else:
+            for folder in folders:
+                st.write(f"📁 {folder['name']} — ID: {folder['id']}")
     except Exception as e:
-        st.error(f"❌ Error al conectar con Google Drive: {e}")
-        st.stop()
-
-# --- Listar carpetas dentro del folder principal ---
-st.subheader("📁 Carpetas dentro del folder principal")
-
-try:
-    folders = list_folders_in_folder(service, folder_id)
-    if not folders:
-        st.info("No se encontraron carpetas dentro del folder principal.")
-    else:
-        for folder in folders:
-            st.write(f"📁 **{folder['name']}** — ID: `{folder['id']}`")
-except Exception as e:
-    st.error(f"Error al listar carpetas: {e}")
-
+        st.error(f"⚠️ Error al conectar con Google Drive: {e}")
