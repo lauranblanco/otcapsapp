@@ -1,9 +1,16 @@
 import streamlit as st
 import os
 from modules.drive_connector import connect_to_drive
-from modules.drive_utils import list_folders_in_folder
 from dotenv import load_dotenv
 from pathlib import Path
+import sys
+import os
+
+# Asegura que el directorio "main" esté en sys.path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from modules.drive_utils import list_folders_in_folder
+
 
 # --- Cargar variables de entorno ---
 env_path = Path(__file__).resolve().parent / ".env"
