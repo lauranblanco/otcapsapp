@@ -1,27 +1,27 @@
-import pandas as pd
-from io import BytesIO
-from googleapiclient.http import MediaIoBaseDownload
-from googleapiclient.errors import HttpError
-from modules.drive_connector import get_drive_service
+import os
+import sys
 
-def list_folders_in_folder(service, folder_id):
-    """Devuelve una lista de carpetas dentro del folder_id especificado."""
-    query = f"'{folder_id}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-    results = service.files().list(q=query, fields="files(id, name)").execute()
-    return results.get("files", [])
+# Asegurar que el módulo pueda importar drive_connector sin importar desde dónde se ejecute
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
 
-def load_csv_from_drive(file_id):
-    try:
-        service = get_drive_service()
-        request = service.files().get_media(fileId=file_id)
-        fh = BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            _, done = downloader.next_chunk()
-        fh.seek(0)
-        df = pd.read_csv(fh)
-        return df
-    except Exception as e:
-        print("Error cargando archivo:", e)
-        return pd.DataFrame()
+from drive_connector import get_drive_service
+
+
+def list_folders_in_folder(folder_id):
+    """Devuelve las subcarpetas dentro de una carpeta de Drive."""
+    service = get_drive_service()
+
+    results = (
+        service.files()
+        .list(
+            q=f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false",
+            fields="files(id, name)",
+        )
+        .execute()
+    )
+
+    folders = results.get("files", [])
+    return folders
+
