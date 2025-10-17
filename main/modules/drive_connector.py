@@ -4,8 +4,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from dotenv import load_dotenv
 from google.oauth2 import service_account
-from googleapiclient.discovery import build
-
+from google.oauth2.credentials import Credentials
 
 load_dotenv("main/.env")
 
@@ -37,20 +36,41 @@ def get_drive_service():
 
 
 def connect_to_drive():
-    """Crea y devuelve un servicio autenticado de Google Drive."""
-    credentials_path = os.getenv("GOOGLE_CREDENTIALS_JSON")
+    """Conecta a Google Drive usando las credenciales del .env."""
 
-    if not credentials_path or not os.path.exists(credentials_path):
-        raise FileNotFoundError(f"No se encontró el archivo de credenciales: {credentials_path}")
+    # Leer credenciales desde variable de entorno
+    credentials_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
+    token_path = os.getenv("TOKEN_PATH", "token.json")
 
-    # Cargar credenciales desde archivo JSON
-    creds = service_account.Credentials.from_service_account_file(
-        credentials_path,
+    if not credentials_json:
+        raise ValueError("No se encontró GOOGLE_CREDENTIALS_JSON en el archivo .env.")
+
+    # Parsear el JSON del .env
+    creds_data = json.loads(credentials_json)
+
+    # Crear flujo OAuth (cliente web)
+    flow = InstalledAppFlow.from_client_config(
+        creds_data,
         scopes=["https://www.googleapis.com/auth/drive"]
     )
 
-    # Crear servicio
+    creds = None
+    # Si ya hay token, cargarlo
+    if os.path.exists(token_path):
+        creds = Credentials.from_authorized_user_file(token_path)
+
+    # Si no hay credenciales válidas, abrir el flujo de autenticación
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            creds = flow.run_local_server(port=0)
+        # Guardar token
+        with open(token_path, "w") as token:
+            token.write(creds.to_json())
+
     service = build("drive", "v3", credentials=creds)
     return service
+
 
 
