@@ -14,7 +14,6 @@ from drive_utils import list_folders_in_folder
 # --- Cargar variables de entorno ---
 load_dotenv(os.path.join(current_dir, ".env"))
 FOLDER_ID = os.getenv("FOLDER_ID")
-print(f"Using FOLDER_ID: {FOLDER_ID}")
 
 # --- Interfaz Streamlit ---
 st.set_page_config(page_title="Google Drive Viewer", page_icon="📁")
