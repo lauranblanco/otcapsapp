@@ -6,7 +6,7 @@ import os
 # Cargar variables del .env
 load_dotenv("main/.env")
 
-FOLDER_ID = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
+FOLDER_ID = os.getenv("FOLDER_ID")
 
 st.title("📊 Dashboard de Datos desde Google Drive")
 
