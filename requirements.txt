@@ -1,0 +1,13 @@
+# --- Core ---
+streamlit
+python-dotenv
+
+# --- Google Drive API ---
+google-api-python-client
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+
+# --- Utilidades ---
+requests
+
