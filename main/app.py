@@ -1,33 +1,21 @@
-import os
-import sys
 import streamlit as st
-from dotenv import load_dotenv
+from drive_connector import get_drive_service
+from drive_utils import list_files_in_folder
 
-# --- Ajustar el path para encontrar los módulos ---
-current_dir = os.path.dirname(os.path.abspath(__file__))
-modules_path = os.path.join(current_dir, "modules")
-if modules_path not in sys.path:
-    sys.path.append(modules_path)
+st.set_page_config(page_title="Google Drive Viewer", layout="wide")
 
-from drive_utils import list_folders_in_folder
+st.title("📂 Archivos en Google Drive")
 
-# --- Cargar variables de entorno ---
-load_dotenv(os.path.join(current_dir, ".env"))
-FOLDER_ID = os.getenv("FOLDER_ID")
+try:
+    service = get_drive_service()
+    files = list_files_in_folder(service)
 
-# --- Interfaz Streamlit ---
-st.set_page_config(page_title="Google Drive Viewer", page_icon="📁")
-st.title("📁 Tus carpetas de Google Drive")
-
-if not FOLDER_ID:
-    st.error(f"❌ No se encontró FOLDER_ID en el archivo .env {FOLDER_ID}")
-else:
-    with st.spinner("Conectando con Google Drive..."):
-        folders = list_folders_in_folder(FOLDER_ID)
-
-    if folders:
-        st.success(f"Se encontraron {len(folders)} carpetas:")
-        for f in folders:
-            st.write(f"📂 **{f['name']}** — ID: `{f['id']}`")
+    if not files:
+        st.warning("No se encontraron archivos en la carpeta especificada.")
     else:
-        st.warning("No se encontraron carpetas en el directorio especificado.")
+        for f in files:
+            st.write(f"**{f['name']}** — {f['mimeType']} — 📅 {f['modifiedTime']}")
+
+except Exception as e:
+    st.error(f"Ocurrió un error: {e}")
+
