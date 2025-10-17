@@ -21,7 +21,7 @@ st.set_page_config(page_title="Google Drive Viewer", page_icon="📁")
 st.title("📁 Tus carpetas de Google Drive")
 
 if not FOLDER_ID:
-    st.error("❌ No se encontró FOLDER_ID en el archivo .env")
+    st.error(f"❌ No se encontró FOLDER_ID en el archivo .env {FOLDER_ID}")
 else:
     with st.spinner("Conectando con Google Drive..."):
         folders = list_folders_in_folder(FOLDER_ID)
