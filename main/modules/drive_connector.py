@@ -3,6 +3,9 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from dotenv import load_dotenv
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+
 
 load_dotenv("main/.env")
 
@@ -31,4 +34,23 @@ def get_drive_service():
             pickle.dump(creds, token)
 
     return build("drive", "v3", credentials=creds)
+
+
+def connect_to_drive():
+    """Crea y devuelve un servicio autenticado de Google Drive."""
+    credentials_path = os.getenv("GOOGLE_CREDENTIALS_JSON")
+
+    if not credentials_path or not os.path.exists(credentials_path):
+        raise FileNotFoundError(f"No se encontró el archivo de credenciales: {credentials_path}")
+
+    # Cargar credenciales desde archivo JSON
+    creds = service_account.Credentials.from_service_account_file(
+        credentials_path,
+        scopes=["https://www.googleapis.com/auth/drive"]
+    )
+
+    # Crear servicio
+    service = build("drive", "v3", credentials=creds)
+    return service
+
 
