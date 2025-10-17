@@ -4,17 +4,14 @@ from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
 from modules.drive_connector import get_drive_service
 
-def list_files_in_folder(folder_id):
-    try:
-        service = get_drive_service()
-        results = service.files().list(
-            q=f"'{folder_id}' in parents and mimeType='text/csv'",
-            fields="files(id, name)"
-        ).execute()
-        return results.get("files", [])
-    except HttpError as error:
-        print(f"Ocurrió un error: {error}")
-        return []
+def list_folders_in_folder(service, folder_id):
+    """Devuelve una lista de carpetas dentro de un folder específico."""
+    query = f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false"
+    results = service.files().list(
+        q=query,
+        fields="files(id, name)"
+    ).execute()
+    return results.get("files", [])
 
 def load_csv_from_drive(file_id):
     try:

@@ -1,28 +1,24 @@
 import streamlit as st
-from modules.drive_utils import list_files_in_folder, load_csv_from_drive
-from dotenv import load_dotenv
+from modules.drive_connector import connect_to_drive
+from modules.drive_utils import list_folders_in_folder
 import os
 
-# Cargar variables del .env
-load_dotenv("main/.env")
+# Conectar con Google Drive
+service = connect_to_drive()
 
+# Obtener el folder_id del .env
 FOLDER_ID = os.getenv("FOLDER_ID")
 
-st.title("📊 Dashboard de Datos desde Google Drive")
+st.title("Carpetas en Google Drive")
 
-# Mostrar archivos en la carpeta
-files = list_files_in_folder(FOLDER_ID)
-
-if files:
-    selected_file = st.selectbox("Selecciona un archivo:", [f["name"] for f in files])
-    file_id = next(f["id"] for f in files if f["name"] == selected_file)
-
-    st.write("Cargando datos desde Google Drive...")
-    df = load_csv_from_drive(file_id)
-
-    if df is not None:
-        st.dataframe(df)
+if service and FOLDER_ID:
+    folders = list_folders_in_folder(service, FOLDER_ID)
+    if folders:
+        st.subheader("Carpetas encontradas:")
+        for folder in folders:
+            st.write(f"📁 {folder['name']}  —  ID: {folder['id']}")
     else:
-        st.error("❌ No se pudo cargar el archivo. Verifica que sea un CSV válido.")
+        st.warning("No se encontraron carpetas dentro del folder indicado.")
 else:
-    st.warning("⚠️ No se encontraron archivos en la carpeta de Drive.")
+    st.error("Error al conectar con Google Drive o falta FOLDER_ID en el archivo .env.")
+
