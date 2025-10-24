@@ -1,13 +1,6 @@
 import streamlit as st
 from drive_connector import get_drive_service
 from drive_utils import list_files_in_folder
-import os
-
-# Eliminar token viejo al iniciar
-if os.path.exists("token.pkl"):
-    os.remove("token.pkl")
-    print("✅ Token viejo eliminado, se generará uno nuevo.")
-
 
 st.set_page_config(page_title="Google Drive Viewer", layout="wide")
 
