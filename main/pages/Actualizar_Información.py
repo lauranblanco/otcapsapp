@@ -1,6 +1,6 @@
 import streamlit as st
 from drive_connector import get_drive_service
-from drive_utils import list_folders_in_folder, list_files_in_folder
+from main.drive_utils import list_folders_in_folder, list_files_in_folder
 
 st.title("🔄 Actualizar información")
 
