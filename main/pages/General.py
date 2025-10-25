@@ -9,7 +9,7 @@ st.title("🌍 Estadísticas Generales")
 
 try:
     service = get_drive_service()
-    root_id = st.secrets["FOLDER"]["ROOT_ID"]
+    root_id = st.secrets["ROOT_ID"]
     empresas = list_folders_in_folder(service, root_id)
 
     if not empresas:
