@@ -1,6 +1,8 @@
 import streamlit as st
 from drive_connector import get_drive_service
-from main.drive_utils import list_folders_in_folder, list_files_in_folder
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from drive_utils import list_folders_in_folder, list_files_in_folder
 
 st.title("🧢 D2CAPS")
 
