@@ -1,24 +1,51 @@
 import streamlit as st
-from drive_connector import get_drive_service
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from drive_utils import list_folders_in_folder, list_files_in_folder
+import os
+from db_init import init_db
+from db import DB_PATH
 
-st.title("🔄 Actualizar información")
+st.title("🔄 Actualizar Información")
 
-try:
-    service = get_drive_service()
-    root_id = st.secrets["ROOT_ID"]
+st.divider()
+st.subheader("⚠️ Zona Administrativa")
 
-    empresas = list_folders_in_folder(service, root_id)
-    if not empresas:
-        st.warning("No se encontraron carpetas de empresas.")
-    else:
-        for empresa in empresas:
-            st.subheader(f"🏢 {empresa['name']}")
-            if st.button(f"Actualizar {empresa['name']}", key=empresa["id"]):
-                files = list_files_in_folder(service, empresa["id"])
-                st.success(f"Se actualizaron {len(files)} archivos de {empresa['name']}")
-except Exception as e:
-    st.error(f"Ocurrió un error: {e}")
+# Estado interno
+if "confirm_reset" not in st.session_state:
+    st.session_state.confirm_reset = False
+
+if "reset_attempts" not in st.session_state:
+    st.session_state.reset_attempts = 0
+
+
+# Botón inicial
+if st.button("🗑 Reiniciar Base de Datos"):
+    st.session_state.confirm_reset = True
+
+
+# Flujo de confirmación
+if st.session_state.confirm_reset:
+
+    password = st.text_input(
+        "Ingrese la clave administrativa para confirmar:",
+        type="password"
+    )
+
+    if st.button("Confirmar reinicio"):
+        if password == st.secrets["RESET_DB_PASSWORD"]:
+
+            if os.path.exists(DB_PATH):
+                os.remove(DB_PATH)
+
+            init_db()
+
+            st.success("Base de datos reiniciada correctamente ✅")
+            st.session_state.confirm_reset = False
+            st.session_state.reset_attempts = 0
+
+        else:
+            st.session_state.reset_attempts += 1
+            st.error("Clave incorrecta ❌")
+
+            if st.session_state.reset_attempts >= 3:
+                st.warning("Demasiados intentos fallidos. Recargue la página.")
+
 
