@@ -1,9 +1,23 @@
 import streamlit as st
+from db_init import init_db
+from db import get_connection
+import pandas as pd
 
-st.set_page_config(page_title="Panel de Empresas", layout="wide")
+init_db()  # asegura que las tablas existan
 
-st.title("📂 Herramienta de Monitoreo Empresarial")
-st.markdown("""
-Bienvenido al panel principal.  
-Usa el menú lateral para navegar entre las páginas de la herramienta.
-""")
+st.title("Test conexión SQLite 🚀")
+
+conn = get_connection()
+
+# Insert test
+if st.button("Insertar cliente prueba"):
+    conn.execute(
+        "INSERT INTO clientes (nombre) VALUES (?)",
+        ("Laura Test",)
+    )
+    conn.commit()
+    st.success("Cliente insertado")
+
+# Mostrar tabla
+df = pd.read_sql("SELECT * FROM clientes", conn)
+st.dataframe(df)
