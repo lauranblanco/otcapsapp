@@ -22,7 +22,7 @@ def init_db():
         id_insumo INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL,
         unidad_medida TEXT,
-        costo_unitario REAL NOT NULL,
+        costo_unitario REAL DEFAULT 0,
         stock_actual REAL DEFAULT 0,
         fecha_actualizacion DATE DEFAULT CURRENT_DATE
     );
