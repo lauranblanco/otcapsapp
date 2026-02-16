@@ -149,7 +149,7 @@ with tab3:
 
     conn = get_connection()
 
-    # Opciones dinámicas
+    # Traemos IDs y nombres (importante para filtrar por ID)
     df_clientes = pd.read_sql_query(
         "SELECT id_cliente, nombre FROM clientes ORDER BY nombre",
         conn
@@ -162,9 +162,12 @@ with tab3:
 
     conn.close()
 
-    filtro_cliente = st.multiselect(
+    # Mostrar nombres pero conservar IDs
+    cliente_dict = dict(zip(df_clientes["nombre"], df_clientes["id_cliente"]))
+
+    filtro_cliente_nombres = st.multiselect(
         "Cliente(s)",
-        df_clientes["nombre"].tolist()
+        list(cliente_dict.keys())
     )
 
     filtro_estado = st.multiselect(
@@ -175,10 +178,10 @@ with tab3:
     fecha_inicio = st.date_input("Desde")
     fecha_fin = st.date_input("Hasta")
 
-    # 🔎 Query con detalle incluido
     query = """
         SELECT 
             p.id_pedido,
+            p.id_cliente,
             c.nombre AS cliente,
             p.fecha_anticipo,
             p.fecha_entrega,
@@ -189,18 +192,20 @@ with tab3:
             d.precio_unitario,
             d.subtotal
         FROM pedidos p
-        JOIN clientes c ON p.id_cliente = c.id_cliente
-        JOIN detalle_pedido d ON p.id_pedido = d.id_pedido
-        JOIN insumos i ON d.id_insumo = i.id_insumo
+        LEFT JOIN clientes c ON p.id_cliente = c.id_cliente
+        LEFT JOIN detalle_pedido d ON p.id_pedido = d.id_pedido
+        LEFT JOIN insumos i ON d.id_insumo = i.id_insumo
     """
 
     condiciones = []
     params = []
 
-    if filtro_cliente:
-        placeholders = ",".join(["?"] * len(filtro_cliente))
-        condiciones.append(f"c.nombre IN ({placeholders})")
-        params.extend(filtro_cliente)
+    # 🔐 Filtrar por ID (no por nombre)
+    if filtro_cliente_nombres:
+        ids_seleccionados = [cliente_dict[n] for n in filtro_cliente_nombres]
+        placeholders = ",".join(["?"] * len(ids_seleccionados))
+        condiciones.append(f"p.id_cliente IN ({placeholders})")
+        params.extend(ids_seleccionados)
 
     if filtro_estado:
         placeholders = ",".join(["?"] * len(filtro_estado))
@@ -222,15 +227,16 @@ with tab3:
 
     df_pedidos = load_data(query, params)
 
-    # Métricas
+    # Métricas correctas
     total_pedidos = df_pedidos["id_pedido"].nunique() if not df_pedidos.empty else 0
     total_ventas = df_pedidos["subtotal"].sum() if not df_pedidos.empty else 0
 
     col1, col2 = st.columns(2)
     col1.metric("Total Pedidos", total_pedidos)
-    col2.metric("Total Ventas", f"${total_ventas:,.0f}")
+    col2.metric("Total Ventas (detalle)", f"${total_ventas:,.0f}")
 
     st.dataframe(df_pedidos, use_container_width=True)
+
 
 
 with tab4:
