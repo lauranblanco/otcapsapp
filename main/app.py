@@ -24,8 +24,8 @@ st.dataframe(df)
 
 if st.button("Insertar insumo prueba"):
     conn.execute(
-        "INSERT INTO insumos (nombre) VALUES (?)",
-        ("insumo",)
+        "INSERT INTO insumos (nombre, costo_unitario) VALUES (?, ?)",
+        ("insumo", 10.0)
     )
     conn.commit()
     st.success("Insumo insertado")
