@@ -55,7 +55,7 @@ def init_db():
         monto REAL NOT NULL,
         fecha DATE DEFAULT CURRENT_DATE,
         pagado_a TEXT,
-        medio_pago TEXT,
+        medio_pago TEXT
     );
     """)
 
