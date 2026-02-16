@@ -28,7 +28,7 @@ def exportar_toda_la_base():
 
     output = io.BytesIO()
 
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df_clientes.to_excel(writer, sheet_name="Clientes", index=False)
         df_insumos.to_excel(writer, sheet_name="Insumos", index=False)
         df_pedidos.to_excel(writer, sheet_name="Pedidos", index=False)
