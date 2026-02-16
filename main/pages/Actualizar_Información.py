@@ -108,8 +108,8 @@ with tab1:
 
         nombre_insumo = st.text_input("Nombre del insumo")
         unidad = st.text_input("Unidad de medida")
-        costo = st.number_input("Costo unitario", min_value=0.0)
-        stock = st.number_input("Stock inicial", min_value=0.0)
+        costo = st.number_input("Costo unitario", min_value=0.0, step=1000.0)
+        stock = st.number_input("Stock inicial", min_value=0.0, step=1.0)
 
         if st.button("Guardar Insumo"):
             conn = get_connection()
