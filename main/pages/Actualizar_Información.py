@@ -79,6 +79,7 @@ with tab1:
     # ======================================================
 
     fecha_entrega = st.date_input("Fecha de entrega")
+    fecha_anticipo = st.date_input("Fecha de anticipo")
     estado = st.selectbox("Estado", ["pendiente", "en_proceso", "entregado"])
 
     # ======================================================
@@ -149,9 +150,9 @@ with tab1:
 
         # Insertar pedido
         cursor.execute("""
-            INSERT INTO pedidos (id_cliente, fecha_entrega, estado)
-            VALUES (?, ?, ?)
-        """, (id_cliente, fecha_entrega, estado))
+            INSERT INTO pedidos (id_cliente, fecha_anticipo, fecha_entrega, estado)
+            VALUES (?, ?, ?, ?)
+        """, (id_cliente, fecha_anticipo, fecha_entrega, estado))
 
         id_pedido = cursor.lastrowid
 
