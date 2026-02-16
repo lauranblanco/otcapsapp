@@ -62,38 +62,78 @@ tab1, tab2, tab3, tab4 = st.tabs(
 with tab1:
     st.subheader("Clientes")
 
-    filtro_nombre = st.text_input("Filtrar por nombre")
+    conn = get_connection()
+
+    df_nombres = pd.read_sql_query(
+        "SELECT DISTINCT nombre FROM clientes ORDER BY nombre",
+        conn
+    )
+    conn.close()
+
+    lista_clientes = df_nombres["nombre"].tolist()
+
+    filtro_clientes = st.multiselect(
+        "Seleccionar cliente(s)",
+        lista_clientes
+    )
 
     query = "SELECT * FROM clientes"
+    condiciones = []
     params = []
 
-    if filtro_nombre:
-        query += " WHERE nombre LIKE ?"
-        params.append(f"%{filtro_nombre}%")
+    if filtro_clientes:
+        placeholders = ",".join(["?"] * len(filtro_clientes))
+        condiciones.append(f"nombre IN ({placeholders})")
+        params.extend(filtro_clientes)
+
+    if condiciones:
+        query += " WHERE " + " AND ".join(condiciones)
 
     df_clientes = load_data(query, params)
 
     st.metric("Total Clientes", len(df_clientes))
     st.dataframe(df_clientes, use_container_width=True)
 
-
 with tab2:
     st.subheader("Insumos")
 
-    filtro_nombre = st.text_input("Filtrar por nombre", key="insumo_nombre")
-    filtro_unidad = st.text_input("Filtrar por unidad de medida", key="insumo_unidad")
+    conn = get_connection()
+
+    df_nombres = pd.read_sql_query(
+        "SELECT DISTINCT nombre FROM insumos ORDER BY nombre",
+        conn
+    )
+
+    df_unidades = pd.read_sql_query(
+        "SELECT DISTINCT unidad_medida FROM insumos ORDER BY unidad_medida",
+        conn
+    )
+
+    conn.close()
+
+    filtro_nombre = st.multiselect(
+        "Seleccionar insumo(s)",
+        df_nombres["nombre"].dropna().tolist()
+    )
+
+    filtro_unidad = st.multiselect(
+        "Unidad de medida",
+        df_unidades["unidad_medida"].dropna().tolist()
+    )
 
     query = "SELECT * FROM insumos"
     condiciones = []
     params = []
 
     if filtro_nombre:
-        condiciones.append("nombre LIKE ?")
-        params.append(f"%{filtro_nombre}%")
+        placeholders = ",".join(["?"] * len(filtro_nombre))
+        condiciones.append(f"nombre IN ({placeholders})")
+        params.extend(filtro_nombre)
 
     if filtro_unidad:
-        condiciones.append("unidad_medida LIKE ?")
-        params.append(f"%{filtro_unidad}%")
+        placeholders = ",".join(["?"] * len(filtro_unidad))
+        condiciones.append(f"unidad_medida IN ({placeholders})")
+        params.extend(filtro_unidad)
 
     if condiciones:
         query += " WHERE " + " AND ".join(condiciones)
@@ -107,12 +147,35 @@ with tab2:
 with tab3:
     st.subheader("Pedidos")
 
-    filtro_cliente = st.text_input("Filtrar por cliente")
-    filtro_estado = st.selectbox(
-        "Filtrar por estado",
-        ["Todos", "pendiente", "entregado", "cancelado"]
+    conn = get_connection()
+
+    # Opciones dinámicas
+    df_clientes = pd.read_sql_query(
+        "SELECT id_cliente, nombre FROM clientes ORDER BY nombre",
+        conn
     )
 
+    df_estados = pd.read_sql_query(
+        "SELECT DISTINCT estado FROM pedidos",
+        conn
+    )
+
+    conn.close()
+
+    filtro_cliente = st.multiselect(
+        "Cliente(s)",
+        df_clientes["nombre"].tolist()
+    )
+
+    filtro_estado = st.multiselect(
+        "Estado",
+        df_estados["estado"].dropna().tolist()
+    )
+
+    fecha_inicio = st.date_input("Desde")
+    fecha_fin = st.date_input("Hasta")
+
+    # 🔎 Query con detalle incluido
     query = """
         SELECT 
             p.id_pedido,
@@ -120,82 +183,114 @@ with tab3:
             p.fecha_anticipo,
             p.fecha_entrega,
             p.estado,
-            p.total
+            p.total AS total_pedido,
+            i.nombre AS insumo,
+            d.cantidad,
+            d.precio_unitario,
+            d.subtotal
         FROM pedidos p
         JOIN clientes c ON p.id_cliente = c.id_cliente
+        JOIN detalle_pedido d ON p.id_pedido = d.id_pedido
+        JOIN insumos i ON d.id_insumo = i.id_insumo
     """
 
     condiciones = []
     params = []
 
     if filtro_cliente:
-        condiciones.append("c.nombre LIKE ?")
-        params.append(f"%{filtro_cliente}%")
+        placeholders = ",".join(["?"] * len(filtro_cliente))
+        condiciones.append(f"c.nombre IN ({placeholders})")
+        params.extend(filtro_cliente)
 
-    if filtro_estado != "Todos":
-        condiciones.append("p.estado = ?")
-        params.append(filtro_estado)
+    if filtro_estado:
+        placeholders = ",".join(["?"] * len(filtro_estado))
+        condiciones.append(f"p.estado IN ({placeholders})")
+        params.extend(filtro_estado)
+
+    if fecha_inicio:
+        condiciones.append("p.fecha_entrega >= ?")
+        params.append(fecha_inicio)
+
+    if fecha_fin:
+        condiciones.append("p.fecha_entrega <= ?")
+        params.append(fecha_fin)
 
     if condiciones:
         query += " WHERE " + " AND ".join(condiciones)
 
+    query += " ORDER BY p.id_pedido DESC"
+
     df_pedidos = load_data(query, params)
 
-    st.metric("Total Pedidos", len(df_pedidos))
+    # Métricas
+    total_pedidos = df_pedidos["id_pedido"].nunique() if not df_pedidos.empty else 0
+    total_ventas = df_pedidos["subtotal"].sum() if not df_pedidos.empty else 0
+
+    col1, col2 = st.columns(2)
+    col1.metric("Total Pedidos", total_pedidos)
+    col2.metric("Total Ventas", f"${total_ventas:,.0f}")
+
     st.dataframe(df_pedidos, use_container_width=True)
-
-    st.divider()
-    st.subheader("Ver detalle de pedido")
-
-    id_pedido = st.number_input("Ingrese ID del pedido", min_value=1, step=1)
-
-    if st.button("Ver detalle"):
-        query_detalle = """
-            SELECT 
-                d.id_detalle,
-                i.nombre AS insumo,
-                d.cantidad,
-                d.precio_unitario,
-                d.subtotal
-            FROM detalle_pedido d
-            JOIN insumos i ON d.id_insumo = i.id_insumo
-            WHERE d.id_pedido = ?
-        """
-
-        df_detalle = load_data(query_detalle, [id_pedido])
-
-        if df_detalle.empty:
-            st.warning("No se encontró detalle para este pedido")
-        else:
-            st.dataframe(df_detalle, use_container_width=True)
 
 
 with tab4:
     st.subheader("Gastos")
 
-    filtro_categoria = st.text_input("Filtrar por categoría")
-    fecha_inicio = st.date_input("Desde", key="fecha_inicio")
-    fecha_fin = st.date_input("Hasta", key="fecha_fin")
+    conn = get_connection()
 
-    query = "SELECT * FROM gastos WHERE 1=1"
+    df_categoria = pd.read_sql_query(
+        "SELECT DISTINCT categoria FROM gastos ORDER BY categoria",
+        conn
+    )
+
+    df_medio = pd.read_sql_query(
+        "SELECT DISTINCT medio_pago FROM gastos ORDER BY medio_pago",
+        conn
+    )
+
+    conn.close()
+
+    filtro_categoria = st.multiselect(
+        "Categoría",
+        df_categoria["categoria"].dropna().tolist()
+    )
+
+    filtro_medio = st.multiselect(
+        "Medio de pago",
+        df_medio["medio_pago"].dropna().tolist()
+    )
+
+    fecha_inicio = st.date_input("Desde", key="gasto_desde")
+    fecha_fin = st.date_input("Hasta", key="gasto_hasta")
+
+    query = "SELECT * FROM gastos"
+    condiciones = []
     params = []
 
     if filtro_categoria:
-        query += " AND categoria LIKE ?"
-        params.append(f"%{filtro_categoria}%")
+        placeholders = ",".join(["?"] * len(filtro_categoria))
+        condiciones.append(f"categoria IN ({placeholders})")
+        params.extend(filtro_categoria)
+
+    if filtro_medio:
+        placeholders = ",".join(["?"] * len(filtro_medio))
+        condiciones.append(f"medio_pago IN ({placeholders})")
+        params.extend(filtro_medio)
 
     if fecha_inicio:
-        query += " AND fecha >= ?"
+        condiciones.append("fecha >= ?")
         params.append(fecha_inicio)
 
     if fecha_fin:
-        query += " AND fecha <= ?"
+        condiciones.append("fecha <= ?")
         params.append(fecha_fin)
+
+    if condiciones:
+        query += " WHERE " + " AND ".join(condiciones)
 
     df_gastos = load_data(query, params)
 
-    st.metric("Total Gastos", f"${df_gastos['monto'].sum():,.0f}" if not df_gastos.empty else "$0")
+    total_gastos = df_gastos["monto"].sum() if not df_gastos.empty else 0
+
+    st.metric("Total Gastos", f"${total_gastos:,.0f}")
     st.dataframe(df_gastos, use_container_width=True)
-
-
-
