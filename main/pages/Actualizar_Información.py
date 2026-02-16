@@ -26,11 +26,13 @@ def get_insumos():
 st.title("🔄 Actualizar Información")
 
 # Crear pestañas
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "📦 Nuevo Pedido",
     "💸 Nuevo Gasto",
-    "⚙️ Administración de Datos"
+    "✏️ Actualizar Datos",
+    "⚙️ Administración"
 ])
+
 
 # ==========================================================
 # 📦 TAB 1 - NUEVO PEDIDO
@@ -206,11 +208,99 @@ with tab2:
             # Aquí luego insertaremos en DB
             st.success("Gasto guardado correctamente ✅")
 
+# ==========================================================
+# ✏️ TAB 3 - ACTUALIZAR DATOS
+# ==========================================================
+
+with tab3:
+
+    st.subheader("✏️ Actualizar Datos Existentes")
+
+    tablas = ["clientes", "insumos", "pedidos", "detalle_pedido", "gastos"]
+
+    tabla_seleccionada = st.selectbox("Seleccionar tabla", tablas)
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Obtener columnas
+    cursor.execute(f"PRAGMA table_info({tabla_seleccionada})")
+    columnas_info = cursor.fetchall()
+
+    columnas = [col[1] for col in columnas_info]
+    pk_col = columnas[0]  # asumimos primera columna es PK
+
+    # Obtener registros
+    cursor.execute(f"SELECT * FROM {tabla_seleccionada}")
+    registros = cursor.fetchall()
+
+    if not registros:
+        st.warning("No hay registros en esta tabla.")
+        conn.close()
+        st.stop()
+
+    # Crear diccionario para mostrar opciones
+    opciones = {}
+
+    for row in registros:
+        row_dict = dict(zip(columnas, row))
+        label = f"{row_dict[pk_col]} - " + str(
+            row_dict.get("nombre", row_dict.get("descripcion", "Registro"))
+        )
+        opciones[label] = row_dict
+
+    seleccionado = st.selectbox("Seleccionar registro", list(opciones.keys()))
+
+    registro = opciones[seleccionado]
+
+    st.markdown("### Editar valores")
+
+    nuevos_valores = {}
+
+    for col in columnas:
+
+        if col == pk_col:
+            st.text_input(col, value=registro[col], disabled=True)
+        else:
+            valor_actual = registro[col]
+
+            if isinstance(valor_actual, (int, float)):
+                nuevos_valores[col] = st.number_input(
+                    col,
+                    value=float(valor_actual) if valor_actual is not None else 0.0
+                )
+            else:
+                nuevos_valores[col] = st.text_input(
+                    col,
+                    value=str(valor_actual) if valor_actual is not None else ""
+                )
+
+    if st.button("Guardar cambios"):
+
+        set_clause = ", ".join([f"{col} = ?" for col in nuevos_valores.keys()])
+        values = list(nuevos_valores.values())
+        values.append(registro[pk_col])
+
+        cursor.execute(
+            f"""
+            UPDATE {tabla_seleccionada}
+            SET {set_clause}
+            WHERE {pk_col} = ?
+            """,
+            values
+        )
+
+        conn.commit()
+        st.success("Registro actualizado correctamente ✅")
+        st.rerun()
+
+    conn.close()
+
 
 # ==========================================================
-# ⚙️ TAB 3 - ADMINISTRACIÓN
+# ⚙️ TAB 4 - ADMINISTRACIÓN
 # ==========================================================
-with tab3:
+with tab4:
 
     st.subheader("⚠️ Zona Administrativa")
 
