@@ -147,95 +147,137 @@ with tab2:
 with tab3:
     st.subheader("Pedidos")
 
-    conn = get_connection()
+    subtab1, subtab2 = st.tabs(["📦 Resumen Pedidos", "📋 Detalle Pedido"])
 
-    # Traemos IDs y nombres (importante para filtrar por ID)
-    df_clientes = pd.read_sql_query(
-        "SELECT id_cliente, nombre FROM clientes ORDER BY nombre",
-        conn
-    )
+    with subtab1:
 
-    df_estados = pd.read_sql_query(
-        "SELECT DISTINCT estado FROM pedidos",
-        conn
-    )
+        conn = get_connection()
 
-    conn.close()
+        df_clientes = pd.read_sql_query(
+            "SELECT id_cliente, nombre FROM clientes ORDER BY nombre",
+            conn
+        )
 
-    # Mostrar nombres pero conservar IDs
-    cliente_dict = dict(zip(df_clientes["nombre"], df_clientes["id_cliente"]))
+        df_estados = pd.read_sql_query(
+            "SELECT DISTINCT estado FROM pedidos",
+            conn
+        )
 
-    filtro_cliente_nombres = st.multiselect(
-        "Cliente(s)",
-        list(cliente_dict.keys())
-    )
+        conn.close()
 
-    filtro_estado = st.multiselect(
-        "Estado",
-        df_estados["estado"].dropna().tolist()
-    )
+        cliente_dict = dict(zip(df_clientes["nombre"], df_clientes["id_cliente"]))
 
-    fecha_inicio = st.date_input("Desde")
-    fecha_fin = st.date_input("Hasta")
+        filtro_cliente = st.multiselect(
+            "Cliente(s)",
+            list(cliente_dict.keys())
+        )
 
-    query = """
-        SELECT 
-            p.id_pedido,
-            p.id_cliente,
-            c.nombre AS cliente,
-            p.fecha_anticipo,
-            p.fecha_entrega,
-            p.estado,
-            p.total AS total_pedido,
-            i.nombre AS insumo,
-            d.cantidad,
-            d.precio_unitario,
-            d.subtotal
-        FROM pedidos p
-        LEFT JOIN clientes c ON p.id_cliente = c.id_cliente
-        LEFT JOIN detalle_pedido d ON p.id_pedido = d.id_pedido
-        LEFT JOIN insumos i ON d.id_insumo = i.id_insumo
-    """
+        filtro_estado = st.multiselect(
+            "Estado",
+            df_estados["estado"].dropna().tolist()
+        )
 
-    condiciones = []
-    params = []
+        fecha_inicio = st.date_input("Desde", key="ped_desde")
+        fecha_fin = st.date_input("Hasta", key="ped_hasta")
 
-    # 🔐 Filtrar por ID (no por nombre)
-    if filtro_cliente_nombres:
-        ids_seleccionados = [cliente_dict[n] for n in filtro_cliente_nombres]
-        placeholders = ",".join(["?"] * len(ids_seleccionados))
-        condiciones.append(f"p.id_cliente IN ({placeholders})")
-        params.extend(ids_seleccionados)
+        query = "SELECT * FROM pedidos"
+        condiciones = []
+        params = []
 
-    if filtro_estado:
-        placeholders = ",".join(["?"] * len(filtro_estado))
-        condiciones.append(f"p.estado IN ({placeholders})")
-        params.extend(filtro_estado)
+        if filtro_cliente:
+            ids = [cliente_dict[n] for n in filtro_cliente]
+            placeholders = ",".join(["?"] * len(ids))
+            condiciones.append(f"id_cliente IN ({placeholders})")
+            params.extend(ids)
 
-    if fecha_inicio:
-        condiciones.append("p.fecha_entrega >= ?")
-        params.append(fecha_inicio)
+        if filtro_estado:
+            placeholders = ",".join(["?"] * len(filtro_estado))
+            condiciones.append(f"estado IN ({placeholders})")
+            params.extend(filtro_estado)
 
-    if fecha_fin:
-        condiciones.append("p.fecha_entrega <= ?")
-        params.append(fecha_fin)
+        if fecha_inicio:
+            condiciones.append("fecha_entrega >= ?")
+            params.append(fecha_inicio)
 
-    if condiciones:
-        query += " WHERE " + " AND ".join(condiciones)
+        if fecha_fin:
+            condiciones.append("fecha_entrega <= ?")
+            params.append(fecha_fin)
 
-    query += " ORDER BY p.id_pedido DESC"
+        if condiciones:
+            query += " WHERE " + " AND ".join(condiciones)
 
-    df_pedidos = load_data(query, params)
+        query += " ORDER BY id_pedido DESC"
 
-    # Métricas correctas
-    total_pedidos = df_pedidos["id_pedido"].nunique() if not df_pedidos.empty else 0
-    total_ventas = df_pedidos["subtotal"].sum() if not df_pedidos.empty else 0
+        df_pedidos = load_data(query, params)
 
-    col1, col2 = st.columns(2)
-    col1.metric("Total Pedidos", total_pedidos)
-    col2.metric("Total Ventas (detalle)", f"${total_ventas:,.0f}")
+        total_pedidos = len(df_pedidos)
+        total_ventas = df_pedidos["total"].sum() if not df_pedidos.empty else 0
 
-    st.dataframe(df_pedidos, use_container_width=True)
+        col1, col2 = st.columns(2)
+        col1.metric("Total Pedidos", total_pedidos)
+        col2.metric("Total Ventas", f"${total_ventas:,.0f}")
+
+        st.dataframe(df_pedidos, use_container_width=True)
+
+    with subtab2:
+
+        conn = get_connection()
+
+        df_pedidos_ids = pd.read_sql_query(
+            "SELECT id_pedido FROM pedidos ORDER BY id_pedido DESC",
+            conn
+        )
+
+        df_insumos = pd.read_sql_query(
+            "SELECT id_insumo, nombre FROM insumos ORDER BY nombre",
+            conn
+        )
+
+        conn.close()
+
+        filtro_pedido = st.multiselect(
+            "ID Pedido",
+            df_pedidos_ids["id_pedido"].tolist()
+        )
+
+        insumo_dict = dict(zip(df_insumos["nombre"], df_insumos["id_insumo"]))
+
+        filtro_insumo = st.multiselect(
+            "Insumo(s)",
+            list(insumo_dict.keys())
+        )
+
+        query = "SELECT * FROM detalle_pedido"
+        condiciones = []
+        params = []
+
+        if filtro_pedido:
+            placeholders = ",".join(["?"] * len(filtro_pedido))
+            condiciones.append(f"id_pedido IN ({placeholders})")
+            params.extend(filtro_pedido)
+
+        if filtro_insumo:
+            ids = [insumo_dict[n] for n in filtro_insumo]
+            placeholders = ",".join(["?"] * len(ids))
+            condiciones.append(f"id_insumo IN ({placeholders})")
+            params.extend(ids)
+
+        if condiciones:
+            query += " WHERE " + " AND ".join(condiciones)
+
+        query += " ORDER BY id_detalle DESC"
+
+        df_detalle = load_data(query, params)
+
+        total_lineas = len(df_detalle)
+        total_detalle = df_detalle["subtotal"].sum() if not df_detalle.empty else 0
+
+        col1, col2 = st.columns(2)
+        col1.metric("Total Líneas", total_lineas)
+        col2.metric("Total Subtotal", f"${total_detalle:,.0f}")
+
+        st.dataframe(df_detalle, use_container_width=True)
+
 
 
 
