@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
+import io
+from datetime import datetime
 from db import DB_PATH
 
 def get_connection():
@@ -12,7 +14,46 @@ def load_data(query, params=None):
     conn.close()
     return df
 
+def exportar_toda_la_base():
+    conn = get_connection()
+    
+    # Cargar todas las tablas
+    df_clientes = pd.read_sql_query("SELECT * FROM clientes", conn)
+    df_insumos = pd.read_sql_query("SELECT * FROM insumos", conn)
+    df_pedidos = pd.read_sql_query("SELECT * FROM pedidos", conn)
+    df_detalle = pd.read_sql_query("SELECT * FROM detalle_pedido", conn)
+    df_gastos = pd.read_sql_query("SELECT * FROM gastos", conn)
+
+    conn.close()
+
+    output = io.BytesIO()
+
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        df_clientes.to_excel(writer, sheet_name="Clientes", index=False)
+        df_insumos.to_excel(writer, sheet_name="Insumos", index=False)
+        df_pedidos.to_excel(writer, sheet_name="Pedidos", index=False)
+        df_detalle.to_excel(writer, sheet_name="Detalle_Pedido", index=False)
+        df_gastos.to_excel(writer, sheet_name="Gastos", index=False)
+
+    output.seek(0)
+
+    fecha = datetime.today().strftime("%Y%m%d")
+
+    st.download_button(
+        label="📥 Descargar Base Completa",
+        data=output,
+        file_name=f"respaldo_base_{fecha}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
 st.title("📊 Visualizar Tablas")
+
+st.markdown("### Respaldo General")
+
+exportar_toda_la_base()
+
+st.divider()
+
 
 tab1, tab2, tab3, tab4 = st.tabs(
     ["Clientes", "Insumos", "Pedidos", "Gastos"]
