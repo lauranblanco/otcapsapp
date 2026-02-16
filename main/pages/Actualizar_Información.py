@@ -149,8 +149,8 @@ with tab1:
 
         # Insertar pedido
         cursor.execute("""
-            INSERT INTO pedidos (id_cliente, fecha_entrega, estado, total)
-            VALUES (?, ?, ?, 0)
+            INSERT INTO pedidos (id_cliente, fecha_entrega, estado)
+            VALUES (?, ?, ?)
         """, (id_cliente, fecha_entrega, estado))
 
         id_pedido = cursor.lastrowid
