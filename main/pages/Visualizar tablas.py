@@ -3,6 +3,8 @@ import pandas as pd
 import sqlite3
 import io
 from datetime import datetime
+from datetime import date
+from dateutil.relativedelta import relativedelta
 from db import DB_PATH
 
 def get_connection():
@@ -177,8 +179,12 @@ with tab3:
             df_estados["estado"].dropna().tolist()
         )
 
-        fecha_inicio = st.date_input("Desde", key="ped_desde")
-        fecha_fin = st.date_input("Hasta", key="ped_hasta")
+        fecha_inicio = st.date_input("Desde", 
+                                     value=date.today(),
+                                      key="ped_desde")
+        fecha_fin = st.date_input("Hasta", 
+                                  value=date.today() + relativedelta(months=1),
+                                  key="ped_hasta")
 
         query = "SELECT * FROM pedidos"
         condiciones = []
