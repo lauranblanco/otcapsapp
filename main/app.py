@@ -43,3 +43,7 @@ st.dataframe(df2)
 st.subheader("Test detalle pedido")
 df3 = pd.read_sql("SELECT * FROM detalle_pedido", conn)
 st.dataframe(df3)
+
+st.subheader("Test gastos")
+df4 = pd.read_sql("SELECT * FROM gastos", conn)
+st.dataframe(df4)

@@ -53,7 +53,9 @@ def init_db():
         descripcion TEXT NOT NULL,
         categoria TEXT,
         monto REAL NOT NULL,
-        fecha DATE DEFAULT CURRENT_DATE
+        fecha DATE DEFAULT CURRENT_DATE,
+        pagado_a TEXT,
+        medio_pago TEXT,
     );
     """)
 
