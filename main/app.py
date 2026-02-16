@@ -10,6 +10,7 @@ st.title("Test conexión SQLite 🚀")
 conn = get_connection()
 
 # Insert test
+st.subheader("Test clientes")
 if st.button("Insertar cliente prueba"):
     conn.execute(
         "INSERT INTO clientes (nombre) VALUES (?)",
@@ -22,6 +23,7 @@ if st.button("Insertar cliente prueba"):
 df = pd.read_sql("SELECT * FROM clientes", conn)
 st.dataframe(df)
 
+st.subheader("Test insumos")
 if st.button("Insertar insumo prueba"):
     conn.execute(
         "INSERT INTO insumos (nombre, costo_unitario) VALUES (?, ?)",
@@ -31,5 +33,13 @@ if st.button("Insertar insumo prueba"):
     st.success("Insumo insertado")
 
 # Mostrar tabla
-df = pd.read_sql("SELECT * FROM insumos", conn)
-st.dataframe(df)
+df1 = pd.read_sql("SELECT * FROM insumos", conn)
+st.dataframe(df1)
+
+st.subheader("Test pedidos")
+df2 = pd.read_sql("SELECT * FROM pedidos", conn)
+st.dataframe(df2)
+
+st.subheader("Test detalle pedido")
+df3 = pd.read_sql("SELECT * FROM detalle_pedido", conn)
+st.dataframe(df3)
