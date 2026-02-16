@@ -30,7 +30,8 @@ def init_db():
     CREATE TABLE IF NOT EXISTS pedidos (
         id_pedido INTEGER PRIMARY KEY AUTOINCREMENT,
         id_cliente INTEGER NOT NULL,
-        fecha_pedido DATE DEFAULT CURRENT_DATE,
+        fecha_anticipo DATE DEFAULT CURRENT_DATE,
+        fecha_entrega DATE DEFAULT CURRENT_DATE,
         estado TEXT DEFAULT 'pendiente',
         total REAL,
         FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
