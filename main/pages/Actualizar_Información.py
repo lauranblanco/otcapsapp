@@ -1,6 +1,7 @@
 import streamlit as st
 import sqlite3
 import os
+from datetime import date
 from db_init import init_db
 from db import DB_PATH
 
@@ -194,19 +195,54 @@ with tab1:
 # ==========================================================
 with tab2:
 
-    st.subheader("Registrar Nuevo Gasto")
+    st.subheader("💸 Registrar Nuevo Gasto")
 
     with st.form("form_nuevo_gasto"):
-        descripcion = st.text_input("Descripción del gasto")
+
+        descripcion = st.text_input("Descripción *")
         categoria = st.text_input("Categoría")
-        monto = st.number_input("Monto", min_value=0.0, step=0.5)
-        fecha = st.date_input("Fecha")
+        monto = st.number_input("Monto *", min_value=0.0, step=1000.0)
+        fecha = st.date_input("Fecha", value=date.today())
+        pagado_a = st.text_input("Pagado a")
+        medio_pago = st.selectbox(
+            "Medio de pago",
+            ["Efectivo", "Transferencia", "Tarjeta", "Nequi", "Otro"]
+        )
 
         submitted = st.form_submit_button("Guardar Gasto")
 
         if submitted:
-            # Aquí luego insertaremos en DB
-            st.success("Gasto guardado correctamente ✅")
+
+            if not descripcion:
+                st.error("La descripción es obligatoria ❌")
+                st.stop()
+
+            if monto <= 0:
+                st.error("El monto debe ser mayor a 0 ❌")
+                st.stop()
+
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                INSERT INTO gastos 
+                (descripcion, categoria, monto, fecha, pagado_a, medio_pago)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                descripcion,
+                categoria,
+                monto,
+                fecha,
+                pagado_a,
+                medio_pago
+            ))
+
+            conn.commit()
+            conn.close()
+
+            st.success("Gasto registrado correctamente ✅")
+            st.rerun()
+
 
 # ==========================================================
 # ✏️ TAB 3 - ACTUALIZAR DATOS
