@@ -21,3 +21,15 @@ if st.button("Insertar cliente prueba"):
 # Mostrar tabla
 df = pd.read_sql("SELECT * FROM clientes", conn)
 st.dataframe(df)
+
+if st.button("Insertar insumo prueba"):
+    conn.execute(
+        "INSERT INTO insumos (nombre) VALUES (?)",
+        ("insumo",)
+    )
+    conn.commit()
+    st.success("Insumo insertado")
+
+# Mostrar tabla
+df = pd.read_sql("SELECT * FROM insumos", conn)
+st.dataframe(df)
