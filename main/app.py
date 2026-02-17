@@ -22,12 +22,18 @@ pedidos_pendientes = pedidos_df[pedidos_df["estado"]=="pendiente"]
 pedidos_entregados = pedidos_df[pedidos_df["estado"]=="entregado"]
 
 atrasados = pd.read_sql_query("""
-    SELECT id_pedido, id_cliente, fecha_entrega, total
-    FROM pedidos
-    WHERE estado='pendiente'
-    AND fecha_entrega < date('now')
-    ORDER BY fecha_entrega ASC
+    SELECT 
+        p.id_pedido,
+        c.nombre as cliente,
+        p.fecha_entrega,
+        p.total
+    FROM pedidos p
+    JOIN clientes c ON p.id_cliente = c.id_cliente
+    WHERE p.estado='pendiente'
+    AND p.fecha_entrega < date('now')
+    ORDER BY p.fecha_entrega ASC
 """, conn)
+
 
 # Tiempo promedio entrega
 tiempos = pd.read_sql_query("""
@@ -101,12 +107,18 @@ st.divider()
 st.subheader("🚚 Próximas Entregas")
 
 proximos = pd.read_sql_query("""
-    SELECT id_pedido, id_cliente, fecha_entrega, total
-    FROM pedidos
-    WHERE estado='pendiente'
-    ORDER BY fecha_entrega ASC
+    SELECT 
+        p.id_pedido,
+        c.nombre as cliente,
+        p.fecha_entrega,
+        p.total
+    FROM pedidos p
+    JOIN clientes c ON p.id_cliente = c.id_cliente
+    WHERE p.estado='pendiente'
+    ORDER BY p.fecha_entrega ASC
     LIMIT 10
 """, conn)
+
 
 st.dataframe(proximos, use_container_width=True)
 
@@ -157,13 +169,17 @@ st.divider()
 st.subheader("👥 Clientes Más Activos (Mes Actual)")
 
 clientes_mes = pd.read_sql_query("""
-    SELECT id_cliente, COUNT(*) as pedidos
-    FROM pedidos
-    WHERE strftime('%Y-%m', fecha_entrega)=strftime('%Y-%m','now')
-    GROUP BY id_cliente
+    SELECT 
+        c.nombre as cliente,
+        COUNT(*) as pedidos
+    FROM pedidos p
+    JOIN clientes c ON p.id_cliente = c.id_cliente
+    WHERE strftime('%Y-%m', p.fecha_entrega)=strftime('%Y-%m','now')
+    GROUP BY c.nombre
     ORDER BY pedidos DESC
     LIMIT 5
 """, conn)
+
 
 st.dataframe(clientes_mes, use_container_width=True)
 
@@ -176,11 +192,15 @@ st.divider()
 st.subheader("📦 Insumos Más Utilizados")
 
 insumos = pd.read_sql_query("""
-    SELECT id_insumo, SUM(cantidad) as total_usado
-    FROM detalle_pedido
-    GROUP BY id_insumo
+    SELECT 
+        i.nombre as insumo,
+        SUM(d.cantidad) as total_usado
+    FROM detalle_pedido d
+    JOIN insumos i ON d.id_insumo = i.id_insumo
+    GROUP BY i.nombre
     ORDER BY total_usado DESC
     LIMIT 5
 """, conn)
+
 
 st.dataframe(insumos, use_container_width=True)
