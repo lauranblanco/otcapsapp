@@ -77,7 +77,7 @@ if ventas_devengadas > 0:
 else:
     ratio_cobranza = 0
 
-st.metric("Ratio de Cobranza", f"{ratio_cobranza:.1f}%")
+col4.metric("Ratio de Cobranza", f"{ratio_cobranza:.1f}%")
 
 if ratio_cobranza < 60:
     st.error("Problema grave de cobranza.")
