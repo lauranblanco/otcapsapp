@@ -94,23 +94,58 @@ volatilidad = finanzas["total"].std()
 
 # st.divider()
 
-# =========================
-# CONCENTRACIÓN DE CLIENTES
-# =========================
+# =========================================
+# CONCENTRACIÓN DE INGRESOS
+# =========================================
 
 st.subheader("🏆 Concentración de Ingresos")
 
-cliente_ingresos = pedidos_df.groupby("id_cliente")[["nombre", "total"]].sum().reset_index()
-cliente_ingresos = cliente_ingresos.sort_values("total", ascending=False)
+cliente_ingresos = pd.read_sql_query("""
+    SELECT 
+        c.nombre as cliente,
+        SUM(p.total) as ingresos
+    FROM pedidos p
+    JOIN clientes c ON p.id_cliente = c.id_cliente
+    WHERE p.estado != 'cancelado'
+    GROUP BY c.nombre
+    ORDER BY ingresos DESC
+""", conn)
 
-top_3 = cliente_ingresos.head(3)["total"].sum()
+# Calcular porcentaje individual
+cliente_ingresos["participacion_%"] = (
+    cliente_ingresos["ingresos"] / ventas_totales * 100
+)
+
+# Concentración Top 3
+top_3 = cliente_ingresos.head(3)["ingresos"].sum()
 concentracion = (top_3 / ventas_totales) * 100 if ventas_totales > 0 else 0
 
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([1,2])
 
-col1.metric("Dependencia Top 3 Clientes", f"{concentracion:.1f}%")
+# KPI principal
+col1.metric(
+    "Dependencia Top 3 Clientes",
+    f"{concentracion:.1f}%"
+)
 
-col2.dataframe(cliente_ingresos.head(5), use_container_width=True)
+# Tabla mejorada
+col2.dataframe(
+    cliente_ingresos.head(5).rename(columns={
+        "cliente": "Cliente",
+        "ingresos": "Ingresos",
+        "participacion_%": "% Participación"
+    }),
+    use_container_width=True
+)
+
+# Alertas estratégicas
+if concentracion > 60:
+    st.error("Alta dependencia comercial: riesgo estructural.")
+elif concentracion > 40:
+    st.warning("Dependencia moderada de pocos clientes.")
+else:
+    st.success("Ingresos diversificados.")
+
 
 st.divider()
 
