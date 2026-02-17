@@ -488,9 +488,20 @@ if archivo is not None:
                 st.write(f"Procesando tabla: {nombre_hoja}")
 
                 # Eliminar columna ID si existe
-                columnas_id = [col for col in df.columns if col.startswith("id_")]
-                df = df.drop(columns=columnas_id, errors="ignore")
-
+                primary_keys = {
+                    "clientes": "id_cliente",
+                    "insumos": "id_insumo",
+                    "pedidos": "id_pedido",
+                    "detalle_pedido": "id_detalle",
+                    "gastos": "id_gasto",
+                    "facturas": "id_factura"
+                }
+                
+                if nombre_hoja in primary_keys:
+                    pk = primary_keys[nombre_hoja]
+                    if pk in df.columns:
+                        df = df.drop(columns=[pk])
+                        
                 # Insertar en modo append
                 df.to_sql(
                     nombre_hoja,
