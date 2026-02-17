@@ -7,20 +7,31 @@ def get_connection():
     return sqlite3.connect(DB_PATH)
 
 st.set_page_config(page_title="Resumen Operativo", layout="wide")
+st.title("🏭 Resumen Operativo")
 
 conn = get_connection()
 
-st.title("🏭 Resumen Operativo")
-
 # ==================================================
-# 🔴 1. SITUACIÓN CRÍTICA (LO MÁS IMPORTANTE)
+# CARGA BASE
 # ==================================================
 
 pedidos_df = pd.read_sql_query("SELECT * FROM pedidos", conn)
+facturas_df = pd.read_sql_query("SELECT * FROM facturas", conn)
 
-pedidos_pendientes = pedidos_df[pedidos_df["estado"]=="pendiente"]
-pedidos_entregados = pedidos_df[pedidos_df["estado"]=="entregado"]
+if pedidos_df.empty:
+    st.warning("No hay pedidos registrados.")
+    st.stop()
 
+# ==================================================
+# 1️⃣ SITUACIÓN CRÍTICA (PRIORIDAD ABSOLUTA)
+# ==================================================
+
+st.subheader("🔴 Situación Crítica")
+
+# Pedidos pendientes
+pendientes = pedidos_df[pedidos_df["estado"] == "pendiente"]
+
+# Pedidos atrasados
 atrasados = pd.read_sql_query("""
     SELECT 
         p.id_pedido,
@@ -34,6 +45,30 @@ atrasados = pd.read_sql_query("""
     ORDER BY p.fecha_entrega ASC
 """, conn)
 
+# Facturas vencidas (impacta operación)
+facturas_vencidas = facturas_df[
+    facturas_df["estado"] == "vencido"
+]
+
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Pedidos Pendientes", len(pendientes))
+col2.metric("Pedidos Atrasados", len(atrasados))
+col3.metric("Facturas Vencidas", len(facturas_vencidas))
+
+if len(atrasados) > 0:
+    st.error("Hay pedidos fuera de tiempo.")
+
+if len(facturas_vencidas) > 0:
+    st.warning("Existen facturas vencidas que pueden afectar producción.")
+
+st.divider()
+
+# ==================================================
+# 2️⃣ EFICIENCIA OPERATIVA
+# ==================================================
+
+st.subheader("⚙️ Eficiencia Operativa")
 
 # Tiempo promedio entrega
 tiempos = pd.read_sql_query("""
@@ -45,7 +80,8 @@ tiempos = pd.read_sql_query("""
 promedio_dias = tiempos["dias"].mean() if not tiempos.empty else 0
 
 # Cumplimiento %
-total_entregados = len(pedidos_entregados)
+total_entregados = len(pedidos_df[pedidos_df["estado"]=="entregado"])
+
 entregados_a_tiempo = pd.read_sql_query("""
     SELECT COUNT(*) as total
     FROM pedidos
@@ -58,50 +94,18 @@ cumplimiento = (
     if total_entregados > 0 else 0
 )
 
-st.subheader("🔴 Situación Actual")
+col1, col2 = st.columns(2)
 
-col1, col2, col3, col4 = st.columns(4)
+col1.metric("Promedio Días Entrega", f"{promedio_dias:.1f}")
+col2.metric("Cumplimiento Entrega", f"{cumplimiento:.1f}%")
 
-col1.metric("Pedidos Pendientes", len(pedidos_pendientes))
-col2.metric("Pedidos Atrasados", len(atrasados))
-col3.metric("Promedio Días Entrega", f"{promedio_dias:.1f}")
-col4.metric("Cumplimiento Entrega", f"{cumplimiento:.1f}%")
-
-if len(atrasados) > 0:
-    st.error("Hay pedidos fuera de tiempo.")
-    
-st.divider()
-
-# ==================================================
-# 📊 2. ESTADO GENERAL
-# ==================================================
-
-total_ventas = pedidos_df["total"].sum()
-gastos_totales = pd.read_sql_query(
-    "SELECT IFNULL(SUM(monto),0) as total FROM gastos",
-    conn
-)["total"][0]
-
-st.subheader("📊 Estado General")
-
-col1, col2, col3 = st.columns(3)
-
-col1.metric("Ventas Totales", f"${total_ventas:,.0f}")
-col2.metric("Pedidos Entregados", len(pedidos_entregados))
-col3.metric("Gastos Totales", f"${gastos_totales:,.0f}")
-
-estado_df = pd.read_sql_query("""
-    SELECT estado, COUNT(*) as cantidad
-    FROM pedidos
-    GROUP BY estado
-""", conn)
-
-st.bar_chart(estado_df.set_index("estado"))
+if cumplimiento < 80:
+    st.warning("Nivel de cumplimiento bajo.")
 
 st.divider()
 
 # ==================================================
-# 🚚 3. PRÓXIMAS ENTREGAS
+# 3️⃣ PRÓXIMAS ENTREGAS (PLANIFICACIÓN)
 # ==================================================
 
 st.subheader("🚚 Próximas Entregas")
@@ -119,13 +123,12 @@ proximos = pd.read_sql_query("""
     LIMIT 10
 """, conn)
 
-
 st.dataframe(proximos, use_container_width=True)
 
 st.divider()
 
 # ==================================================
-# 📈 4. CARGA OPERATIVA Y TENDENCIA
+# 4️⃣ CARGA OPERATIVA FUTURA
 # ==================================================
 
 st.subheader("📈 Carga Operativa por Semana")
@@ -134,36 +137,33 @@ carga = pd.read_sql_query("""
     SELECT strftime('%Y-%W', fecha_entrega) as semana,
            COUNT(*) as pedidos
     FROM pedidos
+    WHERE estado='pendiente'
     GROUP BY semana
     ORDER BY semana
 """, conn)
 
 st.bar_chart(carga.set_index("semana"))
 
-st.subheader("💰 Ventas vs Gastos")
+st.divider()
 
-ventas_mes = pd.read_sql_query("""
-    SELECT strftime('%Y-%m', fecha_entrega) as mes,
-           SUM(total) as ventas
+# ==================================================
+# 5️⃣ ESTADO GENERAL DE PEDIDOS
+# ==================================================
+
+st.subheader("📊 Distribución de Estados")
+
+estado_df = pd.read_sql_query("""
+    SELECT estado, COUNT(*) as cantidad
     FROM pedidos
-    GROUP BY mes
+    GROUP BY estado
 """, conn)
 
-gastos_mes = pd.read_sql_query("""
-    SELECT strftime('%Y-%m', fecha) as mes,
-           SUM(monto) as gastos
-    FROM gastos
-    GROUP BY mes
-""", conn)
-
-merged = pd.merge(ventas_mes, gastos_mes, on="mes", how="left").fillna(0)
-
-st.line_chart(merged.set_index("mes"))
+st.bar_chart(estado_df.set_index("estado"))
 
 st.divider()
 
 # ==================================================
-# 👥 5. CLIENTES MÁS ACTIVOS
+# 6️⃣ CLIENTES MÁS ACTIVOS (MES ACTUAL)
 # ==================================================
 
 st.subheader("👥 Clientes Más Activos (Mes Actual)")
@@ -180,13 +180,12 @@ clientes_mes = pd.read_sql_query("""
     LIMIT 5
 """, conn)
 
-
 st.dataframe(clientes_mes, use_container_width=True)
 
 st.divider()
 
 # ==================================================
-# 📦 6. INSUMOS MÁS UTILIZADOS
+# 7️⃣ INSUMOS MÁS UTILIZADOS
 # ==================================================
 
 st.subheader("📦 Insumos Más Utilizados")
@@ -202,5 +201,22 @@ insumos = pd.read_sql_query("""
     LIMIT 5
 """, conn)
 
-
 st.dataframe(insumos, use_container_width=True)
+
+st.divider()
+
+# ==================================================
+# 8️⃣ ALERTAS OPERATIVAS AUTOMÁTICAS
+# ==================================================
+
+st.subheader("🚨 Alertas Operativas")
+
+if promedio_dias > 15:
+    st.warning("Tiempo promedio de entrega elevado.")
+
+if len(pendientes) > 20:
+    st.warning("Alta acumulación de pedidos pendientes.")
+
+if len(atrasados) > 5:
+    st.error("Exceso de pedidos atrasados.")
+
