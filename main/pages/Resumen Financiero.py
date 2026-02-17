@@ -47,7 +47,7 @@ cuentas_por_cobrar = facturas_df.loc[
 ].sum()
 
 cartera_vencida = facturas_df.loc[
-    facturas_df["estado"] == "vencido", "monto"
+    facturas_df["fecha_programada"] < pd.Timestamp.today(), "monto"
 ].sum()
 
 gastos_totales = gastos_df["monto"].sum()
@@ -67,7 +67,7 @@ col1, col2, col3, col4 = st.columns(4)
 
 col1.metric("Cobros Reales", f"${cobros_reales:,.0f}")
 col2.metric("Cuentas por Cobrar", f"${cuentas_por_cobrar:,.0f}")
-col3.metric("Cartera Vencida", f"${cartera_vencida:,.0f}")
+col3.metric("Cobros Vencidos", f"${cartera_vencida:,.0f}")
 col4.metric("Flujo Caja Neto", f"${flujo_caja_real:,.0f}")
 
 # Calidad de cobranza
@@ -99,8 +99,8 @@ col1.metric("Ventas Devengadas", f"${ventas_devengadas:,.0f}")
 col2.metric("Gastos Totales", f"${gastos_totales:,.0f}")
 col3.metric("Utilidad Devengada", f"${utilidad_devengada:,.0f}")
 
-margen_operativo = (utilidad_devengada / ventas_devengadas * 100) if ventas_devengadas > 0 else 0
-st.metric("Margen Operativo", f"{margen_operativo:.1f}%")
+#margen_operativo = (utilidad_devengada / ventas_devengadas * 100) if ventas_devengadas > 0 else 0
+#st.metric("Margen Operativo", f"{margen_operativo:.1f}%")
 
 st.divider()
 
@@ -231,8 +231,8 @@ if cartera_vencida > 0:
 if concentracion > 60:
     st.warning("Alta dependencia de pocos clientes.")
 
-if margen_operativo < 15:
-    st.warning("Margen operativo bajo.")
+#if margen_operativo < 15:
+#    st.warning("Margen operativo bajo.")
 
 if flujo_caja_real < 0:
     st.error("Flujo de caja negativo.")
