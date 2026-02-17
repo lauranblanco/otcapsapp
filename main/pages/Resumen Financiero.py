@@ -36,6 +36,8 @@ if pedidos_df.empty:
 # MÉTRICAS FINANCIERAS REALES
 # =========================
 
+facturas_df['fecha_programada'] = pd.to_datetime(facturas_df['fecha_programada'])
+
 ventas_devengadas = pedidos_df["total"].sum()
 
 cobros_reales = facturas_df.loc[
