@@ -143,24 +143,76 @@ with tab1:
         st.table(st.session_state.insumos_pedido)
 
     # ======================================================
+    # TOTAL EDITABLE
+    # ======================================================
+
+    total_calculado = sum(item["subtotal"] for item in st.session_state.insumos_pedido)
+
+    if total_calculado > 0:
+
+        total_final = st.number_input(
+            "Total del pedido",
+            min_value=0.0,
+            value=float(total_calculado),
+            step=1000.0
+        )
+
+        # ======================================================
+        # ANTICIPO
+        # ======================================================
+
+        anticipo_sugerido = total_final * 0.5
+
+        anticipo = st.number_input(
+            "Anticipo",
+            min_value=0.0,
+            max_value=float(total_final),
+            value=float(anticipo_sugerido),
+            step=1000.0
+        )
+
+        saldo = total_final - anticipo
+
+        st.info(f"Saldo pendiente: ${saldo:,.2f}")
+
+    else:
+        total_final = 0
+        anticipo = 0
+        saldo = 0
+
+    # ======================================================
     # GUARDAR PEDIDO COMPLETO
     # ======================================================
 
     if st.button("Guardar Pedido Completo"):
 
+        if total_final <= 0:
+            st.error("El total debe ser mayor a 0")
+            st.stop()
+
+        if anticipo > total_final:
+            st.error("El anticipo no puede ser mayor al total")
+            st.stop()
+
         conn = get_connection()
         cursor = conn.cursor()
 
-        # Insertar pedido
+        # Insertar pedido CON total
         cursor.execute("""
-            INSERT INTO pedidos (id_cliente, fecha_anticipo, fecha_entrega, estado)
-            VALUES (?, ?, ?, ?)
-        """, (id_cliente, fecha_anticipo, fecha_entrega, estado))
+            INSERT INTO pedidos 
+            (id_cliente, fecha_anticipo, fecha_entrega, estado, total)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            id_cliente,
+            fecha_anticipo,
+            fecha_entrega,
+            estado,
+            total_final
+        ))
 
         id_pedido = cursor.lastrowid
 
-        total = 0
-
+        # Insertar detalle
         for item in st.session_state.insumos_pedido:
             cursor.execute("""
                 INSERT INTO detalle_pedido
@@ -174,20 +226,44 @@ with tab1:
                 item["subtotal"]
             ))
 
-            total += item["subtotal"]
+        # ==========================
+        # CREAR FACTURAS
+        # ==========================
 
-        # Actualizar total del pedido
-        cursor.execute("""
-            UPDATE pedidos
-            SET total = ?
-            WHERE id_pedido = ?
-        """, (total, id_pedido))
+        # Factura anticipo
+        if anticipo > 0:
+            cursor.execute("""
+                INSERT INTO facturas
+                (id_pedido, tipo, monto, fecha_programada, estado)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                id_pedido,
+                "anticipo",
+                anticipo,
+                fecha_anticipo,
+                "pendiente"
+            ))
+
+        # Factura saldo
+        if saldo > 0:
+            cursor.execute("""
+                INSERT INTO facturas
+                (id_pedido, tipo, monto, fecha_programada, estado)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                id_pedido,
+                "saldo",
+                saldo,
+                fecha_entrega,
+                "pendiente"
+            ))
 
         conn.commit()
         conn.close()
 
-        st.success(f"Pedido guardado correctamente ✅ Total: ${total:.2f}")
+        st.success(f"Pedido guardado correctamente ✅ Total: ${total_final:,.2f}")
         st.session_state.insumos_pedido = []
+
 
 
 # ==========================================================

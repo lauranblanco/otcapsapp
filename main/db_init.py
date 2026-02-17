@@ -57,6 +57,21 @@ def init_db():
         pagado_a TEXT,
         medio_pago TEXT
     );
+                         
+    CREATE TABLE IF NOT EXISTS facturas (
+        id_factura INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_pedido INTEGER NOT NULL,
+        tipo TEXT NOT NULL,  -- 'anticipo' o 'saldo'
+        monto REAL NOT NULL,
+        fecha_programada DATE NOT NULL,  -- fecha esperada de pago
+        fecha_pago DATE,  -- fecha real de pago
+        medio_pago TEXT,
+        cuenta_receptora TEXT,
+        pagado_por TEXT,
+        estado TEXT DEFAULT 'pendiente',  -- pendiente, pagado, vencido
+        FOREIGN KEY (id_pedido) REFERENCES pedidos(id_pedido)
+    );
+
     """)
 
     conn.commit()
