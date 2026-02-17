@@ -316,8 +316,12 @@ with tab4:
         df_medio["medio_pago"].dropna().tolist()
     )
 
-    fecha_inicio = st.date_input("Desde", key="gasto_desde")
-    fecha_fin = st.date_input("Hasta", key="gasto_hasta")
+    fecha_inicio = st.date_input("Desde",
+                                 value=date.today(),
+                                 key="gasto_desde")
+    fecha_fin = st.date_input("Hasta", 
+                              value=date.today() + relativedelta(months=1),
+                              key="gasto_hasta")
 
     query = "SELECT * FROM gastos"
     condiciones = []
@@ -410,8 +414,12 @@ with tab5:
         df_medio["medio_pago"].dropna().tolist()
     )
 
-    fecha_inicio = st.date_input("Desde", key="fact_desde")
-    fecha_fin = st.date_input("Hasta", key="fact_hasta")
+    fecha_inicio = st.date_input("Desde",
+                                 value=date.today(),
+                                 key="fact_desde")
+    fecha_fin = st.date_input("Hasta", 
+                              value=date.today() + relativedelta(months=1),
+                              key="fact_hasta")
 
     # =========================
     # QUERY BASE
