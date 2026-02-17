@@ -70,7 +70,6 @@ col1, col2, col3, col4 = st.columns(4)
 col1.metric("Cobros Reales", f"${cobros_reales:,.0f}")
 col2.metric("Cuentas por Cobrar", f"${cuentas_por_cobrar:,.0f}")
 col3.metric("Cobros Vencidos", f"${cartera_vencida:,.0f}")
-col4.metric("Flujo Caja Neto", f"${flujo_caja_real:,.0f}")
 
 # Calidad de cobranza
 if ventas_devengadas > 0:
