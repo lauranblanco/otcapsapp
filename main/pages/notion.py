@@ -46,6 +46,8 @@ ticket_promedio = pedidos_df["total"].mean()
 
 margen_operativo = (ebitda / ventas_totales * 100) if ventas_totales > 0 else 0
 
+utilidad = ebitda
+
 # =========================
 # KPIs ESTRATÉGICOS
 # =========================
@@ -54,10 +56,12 @@ st.subheader("📊 Indicadores Estratégicos")
 
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("Ventas Totales", f"${ventas_totales:,.0f}")
-col2.metric("EBITDA", f"${ebitda:,.0f}")
-col3.metric("Margen Operativo", f"{margen_operativo:.1f}%")
-col4.metric("Ticket Promedio", f"${ticket_promedio:,.0f}")
+col1.metric("Total Clientes", f"{clientes_df.shape[0]}")
+col2.metric("Ventas Totales", f"${ventas_totales:,.0f}")
+col3.metric("Utilidad Operativa", f"{utilidad:.1f}")
+#col2.metric("EBITDA", f"${ebitda:,.0f}")
+#col3.metric("Margen Operativo", f"{margen_operativo:.1f}%")
+col4.metric("Factura Promedio", f"${ticket_promedio:,.0f}")
 
 st.divider()
 
