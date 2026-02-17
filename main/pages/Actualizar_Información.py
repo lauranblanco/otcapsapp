@@ -1,5 +1,6 @@
 import streamlit as st
 import sqlite3
+import pandas as pd
 import os
 from datetime import date
 from db_init import init_db
@@ -453,5 +454,57 @@ with tab4:
 
                 if st.session_state.reset_attempts >= 3:
                     st.warning("Demasiados intentos fallidos. Recargue la página.")
+
+st.divider()
+
+st.subheader("📂 Cargar información masiva desde Excel")
+
+archivo = st.file_uploader(
+    "Sube el archivo Excel con las tablas",
+    type=["xlsx"]
+)
+
+if archivo is not None:
+
+    try:
+        conn = get_connection()
+
+        # Leer todas las hojas
+        excel_data = pd.read_excel(archivo, sheet_name=None)
+
+        tablas_validas = [
+            "clientes",
+            "insumos",
+            "pedidos",
+            "detalle_pedido",
+            "gastos",
+            "facturas"
+        ]
+
+        for nombre_hoja, df in excel_data.items():
+
+            if nombre_hoja in tablas_validas:
+
+                st.write(f"Procesando tabla: {nombre_hoja}")
+
+                # Eliminar columna ID si existe
+                columnas_id = [col for col in df.columns if col.startswith("id_")]
+                df = df.drop(columns=columnas_id, errors="ignore")
+
+                # Insertar en modo append
+                df.to_sql(
+                    nombre_hoja,
+                    conn,
+                    if_exists="append",
+                    index=False
+                )
+
+        conn.commit()
+        conn.close()
+
+        st.success("✅ Información cargada correctamente.")
+
+    except Exception as e:
+        st.error(f"❌ Error al cargar datos: {e}")
 
 
