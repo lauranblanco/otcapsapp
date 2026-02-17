@@ -90,9 +90,9 @@ st.divider()
 # =========================
 
 volatilidad = finanzas["total"].std()
-st.metric("Volatilidad de Ventas", f"${volatilidad:,.0f}")
+# st.metric("Volatilidad de Ventas", f"${volatilidad:,.0f}")
 
-st.divider()
+# st.divider()
 
 # =========================
 # CONCENTRACIÓN DE CLIENTES
