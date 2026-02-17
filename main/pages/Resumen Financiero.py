@@ -8,7 +8,7 @@ def get_connection():
 
 st.set_page_config(page_title="Dashboard Financiero", layout="wide")
 
-st.title("🏦 Dashboard Financiero Corporativo")
+st.title("🏦 Resumen Financiero")
 
 # =========================
 # CONEXIÓN
@@ -159,8 +159,8 @@ st.divider()
 
 st.subheader("🚨 Alertas Estratégicas")
 
-if margen_operativo < 15:
-    st.warning("Margen operativo bajo para empresa consolidada.")
+#if margen_operativo < 15:
+#    st.warning("Margen operativo bajo para empresa consolidada.")
 
 if concentracion > 60:
     st.error("Alta dependencia de pocos clientes.")
