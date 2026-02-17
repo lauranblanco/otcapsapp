@@ -100,7 +100,7 @@ volatilidad = finanzas["total"].std()
 
 st.subheader("🏆 Concentración de Ingresos")
 
-cliente_ingresos = pedidos_df.groupby("id_cliente")["total"].sum().reset_index()
+cliente_ingresos = pedidos_df.groupby("id_cliente")[["nombre", "total"]].sum().reset_index()
 cliente_ingresos = cliente_ingresos.sort_values("total", ascending=False)
 
 top_3 = cliente_ingresos.head(3)["total"].sum()
