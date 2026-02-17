@@ -2,10 +2,14 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 from datetime import date
+from db import DB_PATH
+
+def get_connection():
+    return sqlite3.connect(DB_PATH)
 
 st.set_page_config(page_title="Dashboard Operativo", layout="wide")
 
-conn = sqlite3.connect("database.db")
+conn = get_connection()
 
 st.title("🏭 Dashboard Operativo")
 
