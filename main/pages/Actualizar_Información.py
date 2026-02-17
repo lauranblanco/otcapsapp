@@ -328,7 +328,7 @@ with tab3:
 
     st.subheader("✏️ Actualizar Datos Existentes")
 
-    tablas = ["clientes", "insumos", "pedidos", "detalle_pedido", "gastos"]
+    tablas = ["clientes", "insumos", "pedidos", "detalle_pedido", "gastos", "facturas"]
 
     tabla_seleccionada = st.selectbox("Seleccionar tabla", tablas)
 
