@@ -10,7 +10,7 @@ st.title("📊 Resumen General")
 
 # --- KPIs ---
 total_ventas = pd.read_sql_query(
-    "SELECT IFNULL(SUM(total),0) as total FROM pedidos WHERE estado != 'cancelado'",
+    "SELECT IFNULL(SUM(total),0) as total FROM pedidos WHERE estado != 'entregado'",
     conn
 )["total"][0]
 
@@ -49,7 +49,7 @@ ventas_mes = pd.read_sql_query("""
     SELECT strftime('%Y-%m', fecha_entrega) as mes,
            SUM(total) as total
     FROM pedidos
-    WHERE estado != 'cancelado'
+    WHERE estado != 'entregado'
     GROUP BY mes
     ORDER BY mes
 """, conn)
