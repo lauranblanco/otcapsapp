@@ -25,6 +25,7 @@ def exportar_toda_la_base():
     df_pedidos = pd.read_sql_query("SELECT * FROM pedidos", conn)
     df_detalle = pd.read_sql_query("SELECT * FROM detalle_pedido", conn)
     df_gastos = pd.read_sql_query("SELECT * FROM gastos", conn)
+    df_facturas = pd.read_sql_query("SELECT * FROM facturas", conn)
 
     conn.close()
 
@@ -36,6 +37,7 @@ def exportar_toda_la_base():
         df_pedidos.to_excel(writer, sheet_name="Pedidos", index=False)
         df_detalle.to_excel(writer, sheet_name="Detalle_Pedido", index=False)
         df_gastos.to_excel(writer, sheet_name="Gastos", index=False)
+        df_facturas.to_excel(writer, sheet_name="Facturas", index=False)
 
     output.seek(0)
 
@@ -57,8 +59,8 @@ exportar_toda_la_base()
 st.divider()
 
 
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["Clientes", "Insumos", "Pedidos", "Gastos"]
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["Clientes", "Insumos", "Pedidos", "Gastos", "Ingresos"]
 )
 
 with tab1:
@@ -348,3 +350,147 @@ with tab4:
 
     st.metric("Total Gastos", f"${total_gastos:,.0f}")
     st.dataframe(df_gastos, use_container_width=True)
+
+
+with tab5:
+    st.subheader("Facturas (Ingresos)")
+
+    conn = get_connection()
+
+    # =========================
+    # CARGA FILTROS DINÁMICOS
+    # =========================
+
+    df_clientes = pd.read_sql_query("""
+        SELECT DISTINCT c.nombre
+        FROM facturas f
+        JOIN pedidos p ON f.id_pedido = p.id_pedido
+        JOIN clientes c ON p.id_cliente = c.id_cliente
+        ORDER BY c.nombre
+    """, conn)
+
+    df_estado = pd.read_sql_query(
+        "SELECT DISTINCT estado FROM facturas ORDER BY estado",
+        conn
+    )
+
+    df_tipo = pd.read_sql_query(
+        "SELECT DISTINCT tipo FROM facturas ORDER BY tipo",
+        conn
+    )
+
+    df_medio = pd.read_sql_query(
+        "SELECT DISTINCT medio_pago FROM facturas ORDER BY medio_pago",
+        conn
+    )
+
+    conn.close()
+
+    # =========================
+    # FILTROS
+    # =========================
+
+    filtro_cliente = st.multiselect(
+        "Cliente",
+        df_clientes["nombre"].dropna().tolist()
+    )
+
+    filtro_estado = st.multiselect(
+        "Estado",
+        df_estado["estado"].dropna().tolist()
+    )
+
+    filtro_tipo = st.multiselect(
+        "Tipo",
+        df_tipo["tipo"].dropna().tolist()
+    )
+
+    filtro_medio = st.multiselect(
+        "Medio de pago",
+        df_medio["medio_pago"].dropna().tolist()
+    )
+
+    fecha_inicio = st.date_input("Desde", key="fact_desde")
+    fecha_fin = st.date_input("Hasta", key="fact_hasta")
+
+    # =========================
+    # QUERY BASE
+    # =========================
+
+    query = """
+        SELECT 
+            f.id_factura,
+            c.nombre as cliente,
+            f.tipo,
+            f.monto,
+            f.fecha_programada,
+            f.fecha_pago,
+            f.medio_pago,
+            f.estado
+        FROM facturas f
+        JOIN pedidos p ON f.id_pedido = p.id_pedido
+        JOIN clientes c ON p.id_cliente = c.id_cliente
+    """
+
+    condiciones = []
+    params = []
+
+    if filtro_cliente:
+        placeholders = ",".join(["?"] * len(filtro_cliente))
+        condiciones.append(f"c.nombre IN ({placeholders})")
+        params.extend(filtro_cliente)
+
+    if filtro_estado:
+        placeholders = ",".join(["?"] * len(filtro_estado))
+        condiciones.append(f"f.estado IN ({placeholders})")
+        params.extend(filtro_estado)
+
+    if filtro_tipo:
+        placeholders = ",".join(["?"] * len(filtro_tipo))
+        condiciones.append(f"f.tipo IN ({placeholders})")
+        params.extend(filtro_tipo)
+
+    if filtro_medio:
+        placeholders = ",".join(["?"] * len(filtro_medio))
+        condiciones.append(f"f.medio_pago IN ({placeholders})")
+        params.extend(filtro_medio)
+
+    if fecha_inicio:
+        condiciones.append("f.fecha_programada >= ?")
+        params.append(fecha_inicio)
+
+    if fecha_fin:
+        condiciones.append("f.fecha_programada <= ?")
+        params.append(fecha_fin)
+
+    if condiciones:
+        query += " WHERE " + " AND ".join(condiciones)
+
+    query += " ORDER BY f.fecha_programada DESC"
+
+    df_facturas = load_data(query, params)
+
+    # =========================
+    # MÉTRICAS SUPERIORES
+    # =========================
+
+    total_facturado = df_facturas["monto"].sum() if not df_facturas.empty else 0
+    total_pagado = df_facturas[df_facturas["estado"]=="pagado"]["monto"].sum() if not df_facturas.empty else 0
+    total_pendiente = df_facturas[df_facturas["estado"]=="pendiente"]["monto"].sum() if not df_facturas.empty else 0
+    total_vencido = df_facturas[df_facturas["estado"]=="vencido"]["monto"].sum() if not df_facturas.empty else 0
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric("Total Facturado", f"${total_facturado:,.0f}")
+    col2.metric("Total Cobrado", f"${total_pagado:,.0f}")
+    col3.metric("Pendiente", f"${total_pendiente:,.0f}")
+    col4.metric("Vencido", f"${total_vencido:,.0f}")
+
+    st.divider()
+
+    # =========================
+    # TABLA
+    # =========================
+
+    st.dataframe(df_facturas, use_container_width=True)
+

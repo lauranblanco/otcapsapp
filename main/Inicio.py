@@ -97,7 +97,7 @@ col1, col2, col3, col4 = st.columns(4)
 col1.metric("Ventas Totales", f"${total_ventas:,.0f}")
 col2.metric("Pedidos Entregados", len(pedidos_entregados))
 col3.metric("Gastos Totales", f"${gastos_totales:,.0f}")
-col4.metric("Backlog Activo", len(pedidos_pendientes))
+col4.metric("Pedidos Pendientes", len(pedidos_pendientes))
 
 estado_df = pd.read_sql_query("""
     SELECT estado, COUNT(*) as cantidad
