@@ -532,8 +532,8 @@ with tab4:
                             index=False
                         )
 
-            conn.commit()
-            conn.close()
+                    conn.commit()
+                    conn.close()
 
             st.success("✅ Información cargada correctamente.")
 
