@@ -182,7 +182,7 @@ with tab3:
         )
 
         fecha_inicio = st.date_input("Desde", 
-                                     value=date.today(),
+                                     value=date.today() - relativedelta(months=1),
                                       key="ped_desde")
         fecha_fin = st.date_input("Hasta", 
                                   value=date.today() + relativedelta(months=1),
@@ -317,7 +317,7 @@ with tab4:
     )
 
     fecha_inicio = st.date_input("Desde",
-                                 value=date.today(),
+                                 value=date.today() - relativedelta(months=1),
                                  key="gasto_desde")
     fecha_fin = st.date_input("Hasta", 
                               value=date.today() + relativedelta(months=1),
@@ -415,7 +415,7 @@ with tab5:
     )
 
     fecha_inicio = st.date_input("Desde",
-                                 value=date.today(),
+                                 value=date.today() - relativedelta(months=1),
                                  key="fact_desde")
     fecha_fin = st.date_input("Hasta", 
                               value=date.today() + relativedelta(months=1),
