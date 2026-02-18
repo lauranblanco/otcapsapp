@@ -533,7 +533,7 @@ with tab4:
                         )
 
                     conn.commit()
-                    conn.close()
+            conn.close()
 
             st.success("✅ Información cargada correctamente.")
 
