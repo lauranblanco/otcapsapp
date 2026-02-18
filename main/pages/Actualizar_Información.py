@@ -455,67 +455,67 @@ with tab4:
                 if st.session_state.reset_attempts >= 3:
                     st.warning("Demasiados intentos fallidos. Recargue la página.")
 
-st.divider()
+    st.divider()
 
-st.subheader("📂 Cargar información masiva desde Excel")
+    st.subheader("📂 Cargar información masiva desde Excel")
 
-archivo = st.file_uploader(
-    "Sube el archivo Excel con las tablas",
-    type=["xlsx"]
-)
+    archivo = st.file_uploader(
+        "Sube el archivo Excel con las tablas",
+        type=["xlsx"]
+    )
 
-if archivo is not None:
+    if archivo is not None:
 
-    try:
-        conn = get_connection()
+        try:
+            conn = get_connection()
 
-        # Leer todas las hojas
-        excel_data = pd.read_excel(archivo, sheet_name=None)
+            # Leer todas las hojas
+            excel_data = pd.read_excel(archivo, sheet_name=None)
 
-        tablas_validas = [
-            "clientes",
-            "insumos",
-            "pedidos",
-            "detalle_pedido",
-            "gastos",
-            "facturas"
-        ]
+            tablas_validas = [
+                "clientes",
+                "insumos",
+                "pedidos",
+                "detalle_pedido",
+                "gastos",
+                "facturas"
+            ]
 
-        for nombre_hoja, df in excel_data.items():
-
-            if nombre_hoja in tablas_validas:
-
-                st.write(f"Procesando tabla: {nombre_hoja}")
-
-                # Eliminar columna ID si existe
-                primary_keys = {
-                    "clientes": "id_cliente",
-                    "insumos": "id_insumo",
-                    "pedidos": "id_pedido",
-                    "detalle_pedido": "id_detalle",
-                    "gastos": "id_gasto",
-                    "facturas": "id_factura"
-                }
+            for nombre_hoja, df in excel_data.items():
+    
+                if nombre_hoja in tablas_validas:
+    
+                    st.write(f"Procesando tabla: {nombre_hoja}")
+    
+                    # Eliminar columna ID si existe
+                    primary_keys = {
+                        "clientes": "id_cliente",
+                        "insumos": "id_insumo",
+                        "pedidos": "id_pedido",
+                        "detalle_pedido": "id_detalle",
+                        "gastos": "id_gasto",
+                        "facturas": "id_factura"
+                    }
                 
-                if nombre_hoja in primary_keys:
-                    pk = primary_keys[nombre_hoja]
-                    if pk in df.columns:
-                        df = df.drop(columns=[pk])
+                    if nombre_hoja in primary_keys:
+                        pk = primary_keys[nombre_hoja]
+                        if pk in df.columns:
+                            df = df.drop(columns=[pk])
                         
-                # Insertar en modo append
-                df.to_sql(
-                    nombre_hoja,
-                    conn,
-                    if_exists="append",
-                    index=False
-                )
+                    # Insertar en modo append
+                    df.to_sql(
+                        nombre_hoja,
+                        conn,
+                        if_exists="append",
+                        index=False
+                    )
 
-        conn.commit()
-        conn.close()
+            conn.commit()
+            conn.close()
 
-        st.success("✅ Información cargada correctamente.")
+            st.success("✅ Información cargada correctamente.")
 
-    except Exception as e:
-        st.error(f"❌ Error al cargar datos: {e}")
+        except Exception as e:
+            st.error(f"❌ Error al cargar datos: {e}")
 
 
