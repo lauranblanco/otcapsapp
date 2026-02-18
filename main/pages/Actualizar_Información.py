@@ -502,13 +502,35 @@ with tab4:
                         if pk in df.columns:
                             df = df.drop(columns=[pk])
                         
-                    # Insertar en modo append
-                    df.to_sql(
-                        nombre_hoja,
-                        conn,
-                        if_exists="append",
-                        index=False
-                    )
+                    if nombre_hoja in ["clientes", "insumos"]:
+                        # Leer datos existentes
+                        df_existente = pd.read_sql(f"SELECT * FROM {nombre_hoja}", conn)
+                        # Concatenar existente + nuevo
+                        df_combinado = pd.concat([df_existente, df], ignore_index=True)
+
+                        # Eliminar duplicados (ajusta subset según tus columnas únicas)
+                        if nombre_hoja == "clientes":
+                            # Ejemplo: asumiendo que email es único
+                            df_sin_duplicados = df_combinado.drop_duplicates(subset=['nombre', 'email', 'telefono'], keep='last')
+                        elif nombre_hoja == "insumos":
+                            # Ejemplo: asumiendo que código es único
+                            df_sin_duplicados = df_combinado.drop_duplicates(subset=['nombre'], keep='last')
+                                
+                        # Reemplazar toda la tabla
+                        df_sin_duplicados.to_sql(
+                            nombre_hoja,
+                            conn,
+                            if_exists="replace",
+                            index=False
+                        )
+                    else:
+                        # Para otras tablas, solo append normal
+                        df.to_sql(
+                            nombre_hoja,
+                            conn,
+                            if_exists="append",
+                            index=False
+                        )
 
             conn.commit()
             conn.close()
