@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 from db import DB_PATH
+from db_init import init_db
+
+init_db()
 
 def get_connection():
     return sqlite3.connect(DB_PATH)
