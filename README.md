@@ -1,3 +1,55 @@
+<!-- Language selector / Selector de idioma -->
+<div align="right">
+  <a href="#en">🇬🇧 English</a> | <a href="#es">🇪🇸 Español</a>
+</div>
+
+<!-- English version -->
+<div id="en"></div>
+
+# Data Visualization and Management Tool
+
+## Overview
+
+This repository contains a financial and operational data visualization and management tool, specifically designed for a small business. The original version is currently in use, while this repository showcases a test/demo version.
+
+## Data Extraction and Storage
+
+The tool features the following data management capabilities:
+
+- **Google Drive Integration**: Utilizes Google Cloud APIs to extract information directly from Google Drive, enabling synchronized and up-to-date work. (For demonstration purposes, this version generates simulated data locally.)
+- **Relational Database**: Data is stored in a local `.DB` file within the Streamlit.io app.
+
+### Data Structure
+
+![Relational database diagram](main/images/base_relacional.png)
+
+## Deployment
+
+The tool is built with accessibility and ease of use in mind:
+
+- **Platform**: Developed in Streamlit, offering:
+  - Free and straightforward deployment
+  - Multi-device access (computers, tablets, mobile devices)
+  - Clean and responsive interface
+
+### Demo Access
+
+You can access the test version here:  
+🔗 [https://d2caps-inicio.streamlit.app/](https://d2caps-inicio.streamlit.app/)
+
+**Note**: If the page is in sleep mode, simply press the button to start the application. The process takes less than 20 seconds.
+
+## Technologies Used
+
+- Streamlit
+- Google Cloud APIs
+- SQLite Database (.DB)
+
+---
+
+<!-- Spanish version -->
+<div id="es"></div>
+
 # Herramienta de Visualización y Manejo de Datos
 
 ## Descripción General
