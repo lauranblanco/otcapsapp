@@ -13,7 +13,7 @@ La herramienta cuenta con las siguientes capacidades de manejo de datos:
 
 ### Estructura de Datos
 
-% ![Diagrama de estructura de datos](ruta/a/tu/imagen.png)
+![Diagrama de estructura de datos](main/images/base_relacional.png)
 
 *Nota: Reemplaza "ruta/a/tu/imagen.png" con la ubicación real de tu imagen*
 
