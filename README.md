@@ -15,8 +15,6 @@ La herramienta cuenta con las siguientes capacidades de manejo de datos:
 
 ![Diagrama de estructura de datos](main/images/base_relacional.png)
 
-*Nota: Reemplaza "ruta/a/tu/imagen.png" con la ubicación real de tu imagen*
-
 ## Despliegue
 
 La herramienta está construida pensando en la accesibilidad y facilidad de uso:
