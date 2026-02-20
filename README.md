@@ -10,11 +10,9 @@
 
 ## Overview
 
-This repository contains a financial and operational data visualization and management tool, specifically designed for a small business. The original version is currently in use, while this repository showcases a test/demo version.
+This repository contains a financial and operational data visualization and management tool, designed for a small business. The original version is currently in use, while this repository showcases a test/demo version.
 
 ## Data Extraction and Storage
-
-The tool features the following data management capabilities:
 
 - **Google Drive Integration**: Utilizes Google Cloud APIs to extract information directly from Google Drive, enabling synchronized and up-to-date work. (For demonstration purposes, this version generates simulated data locally.)
 - **Relational Database**: Data is stored in a local `.DB` file within the Streamlit.io app.
@@ -54,11 +52,9 @@ You can access the test version here:
 
 ## Descripción General
 
-Este repositorio contiene una herramienta de visualización y manejo de datos financieros y operativos, diseñada específicamente para una pequeña empresa. La versión original se encuentra actualmente en uso, mientras que este repositorio muestra una versión de prueba/demostración.
+Este repositorio contiene una herramienta de visualización y manejo de datos financieros y operativos, diseñada para una pequeña empresa. La versión original se encuentra actualmente en uso, mientras que este repositorio muestra una versión de prueba/demostración.
 
 ## Extracción y Almacenamiento de Datos
-
-La herramienta cuenta con las siguientes capacidades de manejo de datos:
 
 - **Integración con Google Drive**: Utiliza Google Cloud APIs para extraer información directamente desde Google Drive, permitiendo un trabajo sincronizado y actualizado. (Para fines de demostración, esta versión genera datos simulados de manera local.)
 - **Base de datos relacional**: Los datos se almacenan en un archivo `.DB` local en la app en Streamlit.io.
